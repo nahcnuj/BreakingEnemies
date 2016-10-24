@@ -1,0 +1,8 @@
+#module mod_enemy
+
+#deffunc enemyInit int n_, int id_
+	
+	return
+
+
+#global

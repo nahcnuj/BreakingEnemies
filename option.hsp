@@ -1,0 +1,217 @@
+*Option
+	repeat WindowHeight/ChangeSpeed, 1
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, cnt*ChangeSpeed
+		await 16
+	loop
+	
+	color 255, 255, 255
+
+	repeat
+		stick advKey, 0
+		mousePosX = mousex
+		mousePosY = mousey
+		
+		redraw 0
+
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, BackgroundImageHeight
+
+		;タイトル描画
+		gmode 0
+		pos (WindowWidth-SmallTitleImageWidth)/2, 64-16-32
+		gcopy SmallTitleImageBufferID, 0, 0, SmallTitleImageWidth, SmallTitleImageHeight
+
+		;簡易ヘルプ描画
+		pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+		gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+		gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth, MessageBackgroundImageHeight
+		pos 16, WindowHeight-32
+		color 0, 0, 0
+		font msgothic, 16
+		mes message
+
+		message = AppInfo
+	
+		gmode 0
+	
+		;背景
+		repeat 3
+			pos (WindowWidth-OptionItemWidth)/2, 96+(OptionChipHeight+24)*cnt
+			repeat 7
+				celput OptionChipBufferID, 17
+			loop
+		loop
+
+		;Difficulty
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth, 96
+		celput OptionChipBufferID, 0
+		IsMouseOnDifficulty = IsOnMouse( (WindowWidth-OptionItemWidth)/2, ginfo_cy, OptionItemWidth, OptionItemHeight, mousePosX, mousePosY )
+		if (IsMouseOnDifficulty): message = "このゲームの難易度を変更できます。"
+
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth*3, 96
+		isMouseOnEasy = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnEasy): message = "敵の攻撃力が下がるなど,低めの難易度です。"
+		if (curDifficulty == DifficultyEasy) {
+			celput OptionChipBufferID, 2
+		} else {
+			celput OptionChipBufferID, 1
+		}
+		
+		isMouseOnNormal = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnNormal): message = "標準の難易度です。"
+		if (curDifficulty == DifficultyNormal) {
+			celput OptionChipBufferID, 4
+		} else {
+			celput OptionChipBufferID, 3
+		}
+		
+		isMouseOnHard = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnHard): message = "敵の攻撃力が上がるなど,高めの難易度です。"
+		if (curDifficulty == DifficultyHard) {
+			celput OptionChipBufferID, 6
+		} else {
+			celput OptionChipBufferID, 5
+		}
+
+		;BGM
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth, 96+OptionItemHeight+24
+		celput OptionChipBufferID, 7
+		isMouseOnBGM = IsOnMouse( (WindowWidth-OptionItemWidth)/2, ginfo_cy, OptionItemWidth, OptionItemHeight, mousePosX, mousePosY )
+		if (isMouseOnBgm): message = "このゲームのBGMの音量を5段階で変更できます。"
+	
+		pos (WindowWidth-OptionItemWidth)/2, 96+OptionItemHeight+24+12
+		font msgothic, 32, 16
+		color 0, 0, 0
+		mes "未実装>>"
+
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth*2, 96+OptionItemHeight+24
+		isMouseOnBGMSilent = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnBGMSilent): message = "BGMの音量を鳴らさなくします。"
+		if (curBGMVolume == VolumeSilent) {
+			celput OptionChipBufferID, 9
+		} else {
+			celput OptionChipBufferID, 8
+		}
+	
+		isMouseOnBGMSoft = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnBGMSoft): message = "BGMの音量を小さめ(25%)にします。"
+		if (curBGMVolume == VolumeSoft) {
+			celput OptionChipBufferID, 11
+		} else {
+			celput OptionChipBufferID, 10
+		}
+	
+		isMouseOnBGMMedium = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnBGMMedium): message = "BGMの音量を中くらい(50%)にします。"
+		if (curBGMVolume == VolumeMedium) {
+			celput OptionChipBufferID, 13
+		} else {
+			celput OptionChipBufferID, 12
+		}
+	
+		isMouseOnBGMLoud = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnBGMLoud): message = "BGMの音量を最大(100%)にします。"
+		if (curBGMVolume == VolumeLoud) {
+			celput OptionChipBufferID, 15
+		} else {
+			celput OptionChipBufferID, 14
+		}
+
+		;SE
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth, 96+(OptionItemHeight+24)*2
+		celput OptionChipBufferID, 16
+		IsMouseOnSE = IsOnMouse( (WindowWidth-OptionItemWidth)/2, ginfo_cy, OptionItemWidth, OptionItemHeight, mousePosX, mousePosY )
+		if (IsMouseOnSE): message = "このゲームのSEの音量を4段階で変更できます。"
+	
+		pos (WindowWidth-OptionItemWidth)/2, 96+(OptionItemHeight+24)*2+12
+		font msgothic, 32, 16
+		color 0, 0, 0
+		mes "未実装>>"
+
+		pos (WindowWidth-OptionItemWidth)/2+OptionChipWidth*2, 96+(OptionItemHeight+24)*2
+		isMouseOnSESilent = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnSESilent): message = "SEの音量を鳴らさなくします。"
+		if (curSEVolume == VolumeSilent) {
+			celput OptionChipBufferID, 9
+		} else {
+			celput OptionChipBufferID, 8
+		}
+	
+		isMouseOnSESoft = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnSESoft): message = "SEの音量を小さめ(25%)にします。"
+		if (curSEVolume == VolumeSoft) {
+			celput OptionChipBufferID, 11
+		} else {
+			celput OptionChipBufferID, 10
+		}
+	
+		isMouseOnSEMedium = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnSEMedium): message = "SEの音量を中くらい(50%)にします。"
+		if (curSEVolume == VolumeMedium) {
+			celput OptionChipBufferID, 13
+		} else {
+			celput OptionChipBufferID, 12
+		}
+	
+		isMouseOnSELoud = IsOnMouse( ginfo_cx, ginfo_cy, OptionChipWidth, OptionChipHeight, mousePosX, mousePosY)
+		if (isMouseOnSELoud): message = "SEの音量を最大(100%)にします。"
+		if (curSEVolume == VolumeLoud) {
+			celput OptionChipBufferID, 15
+		} else {
+			celput OptionChipBufferID, 14
+		}
+
+		;Back
+		pos (WindowWidth-2*MenuChipWidth-32)/2, 96+3*OptionBackgroundImageHeight+3*24
+		isMouseOnBack = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (isMouseOnBack) {
+			celput MenuChipBufferID, 13
+			message = "設定を変更せずにタイトル画面に戻ります。"
+		} else {
+			celput MenuChipBufferID, 12
+		}
+
+		;Setting
+		pos ginfo_cx+32, ginfo_cy
+		isMouseOnSetting = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (isMouseOnSetting) {
+			celput MenuChipBufferID, 17
+			message = "設定を保存してタイトル画面に戻ります。"
+		} else {
+			celput MenuChipBufferID, 16
+		}
+
+		redraw 1
+
+		if (advKey & MouseLeft) {
+			;Difficulty
+			if (isMouseOnEasy): curDifficulty = DifficultyEasy
+			if (isMouseOnNormal): curDifficulty = DifficultyNormal
+			if (isMouseOnHard): curDifficulty = DifficultyHard
+
+			;BGM
+			if (isMouseOnBGMSilent): curBGMVolume = VolumeSilent
+			if (isMouseOnBGMSoft): curBGMVolume = VolumeSoft
+			if (isMouseOnBGMMedium): curBGMVolume = VolumeMedium
+			if (isMouseOnBGMLoud): curBGMVolume = VolumeLoud
+
+			;SE
+			if (isMouseOnSESilent): curSEVolume = VolumeSilent
+			if (isMouseOnSESoft): curSEVolume = VolumeSoft
+			if (isMouseOnSEMedium): curSEVolume = VolumeMedium
+			if (isMouseOnSELoud): curSEVolume = VolumeLoud
+
+			;Back
+			if (isMouseOnBack): goto *TitleMenu
+
+			;Setting
+			if (isMouseOnSetting) {
+				;gosub *SaveSettingFile	//高専祭用
+				goto *TitleMenu
+			}
+		}
+		
+		await 16
+	loop
+	stop

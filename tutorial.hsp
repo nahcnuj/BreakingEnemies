@@ -1,0 +1,73 @@
+*Tutorial
+	gsel BackgroundBufferID
+	picload "images/tutorial0.png", 1
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 100
+	
+	gsel BackgroundBufferID
+	picload "images/tutorial1.png", 1
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 3000
+	
+	gsel BackgroundBufferID
+	picload "images/tutorial2.png", 1
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 3000
+	
+	gsel BackgroundBufferID
+	picload "images/tutorial3.png", 1
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 3000
+	
+	gsel BackgroundBufferID
+	picload "images/tutorial4.png", 1
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 3000
+	
+	gsel MainWindowID
+	return

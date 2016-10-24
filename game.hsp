@@ -1,0 +1,403 @@
+*Main
+	selectedDefenderID = 0
+	maxCastleHP = 20 - curDifficulty*5
+	curCastleHP = maxCastleHP
+	curCoin = 15 - curDifficulty*3
+
+	buffer BackgroundBufferID, WindowWidth, WindowHeight
+	color 0, 0, $33: boxf
+	
+	gsel MainWindowID
+	repeat 256/ChangeSpeed
+		gmode gmode_rgb0alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	gosub *LoadStageFile
+	gosub *PaintFieldToBuffer
+	gosub *SetEnemies
+	
+	if (curSelectedStage == 1): gosub *Tutorial
+	
+	gsel BackgroundBufferID
+	
+	color 0, 0, $33
+	boxf
+	
+	pos 0, 0
+	gmode 2
+	gcopy FieldBufferID, 0, 0, FieldWidth, FieldHeight
+	
+	;ステータス表示
+	pos FieldWidth+8, 8
+	color $ff, $ff, $ff
+	font "ＭＳ Ｐゴシック", 24, 1
+	mes stageTitle(curSelectedStage-1)
+
+	pos ginfo_cx, ginfo_cy+8
+	font msgothic, 18
+	color $ff, $ff, $00: mes "　資　金　　" + curCoin	;所持coin数
+	color $ff, $7f, $7f: mes "城の耐久値　" + curCastleHP + " / " + maxCastleHP	;castleの残り耐久値
+
+	curx = ginfo_cx
+	cury = ginfo_cy+8
+
+	;Normal defender
+	if (selectedDefenderID == 0): gmode 2: else: gmode gmode_rgb0alpha, 48, 48, 127
+	pos curx, cury: celput DefenderBufferID, 0	;通常
+	/*if (advKey == MouseLeft && curx <= mousePosX && mousePosX <= curx + FieldChipWidth && cury <= mousePosY && mousePosY <= cury + FieldChipHeight) {
+		if (selectedDefenderID != 0): selectedDefenderID = 0: else: selectedDefenderID = -1
+	}*/
+
+	;選択defender情報
+	if (selectedDefenderID >= 0) {
+		font msgothic, 18, font_bold
+		color $ff, $ff, $ff
+		pos FieldWidth+8, ginfo_cy+FieldChipHeight+12
+		mes "<< Defenderの情報 >>"
+
+		font msgothic, 18
+		pos ginfo_cx+18, ginfo_cy+4
+		color $ff, $ff, $00: mes "費　用　　" + DefenderSetCost(selectedDefenderID)
+		color $ff, $00, $00: mes "攻撃力　　" + WeaponAtk(selectedDefenderID)
+	}
+	
+	await 1000
+
+	gsel MainWindowID
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	buffer EnemyBufferID, EnemyBufferWidth, EnemyBufferHeight
+	color 0, 0, 0: boxf
+
+	i = 0
+	gameTime = 0
+	curDefenderNum = 0
+	nowEnemyNum = enemyNum
+	if (curDifficulty == DifficultyEasy): maxDelayTime = 60*10-1
+	if (curDifficulty == DifficultyNormal): maxDelayTime = 60*10-1
+	if (curDifficulty == DifficultyHard): maxDelayTime = 60*5-1
+	delayTime = maxDelayTime
+	endFlag = 0
+	curDestroyEnemies = 0
+	dim existDefender, FieldChipNumX, FieldChipNumY
+
+	repeat
+		stick advKey, 0, 1
+		mousePosX = mousex
+		mousePosY = mousey
+		mouseMapX = mousePosX/FieldChipWidth
+		mouseMapY = mousePosY/FieldChipHeight
+
+		gsel MainWindowID
+		gmode 2
+	
+		if (curCastleHP <= 0) {
+			if (endFlag == 1) {
+				gosub *GameOver
+				goto *SelectStage
+			}
+			endFlag = 1
+		}
+		if (nowEnemyNum <= 0) {
+			if (endFlag == 1) {
+				gosub *StageClear
+				goto *SelectStage
+			}
+			endFlag = 1
+		}
+
+		redraw 0
+		
+		pos 0, 0
+		gcopy FieldBufferID, 0, 0, FieldWidth, FieldHeight
+		pos 0, 0
+		gcopy EnemyBufferID, 0, 0, EnemyBufferWidth, EnemyBufferHeight
+		
+		if (delayTime <= 0) {
+			if (i < enemyNum) {
+				if (enemyTime(i) == gameTime) {
+					enemyLive(i) = 1
+					i++
+				}
+			}
+			gsel EnemyBufferID
+			color 0, 0, 0: boxf
+
+			gosub *PaintEnemies
+			gosub *MoveEnemies
+		
+			gsel MainWindowID
+	
+			repeat curDefenderNum
+				if (defenderLive(cnt) == 0): continue
+				if (defenderAtkRemainInterval(cnt) > 0): defenderAtkRemainInterval(cnt)--
+			loop
+			
+			gosub *PaintWeapons
+			
+			gosub *AttackEnemies
+			gosub *MoveWeapons
+
+			gameTime++
+		}
+		
+		gosub *PaintDefenders
+	
+		if (delayTime > 0) {
+			color 255, 255, 255
+			
+			pos (maxDelayTime-delayTime)*FieldWidth/maxDelayTime, 80
+			font "Comic Sans MS", 144, 16
+			mes delayTime/60+1
+	
+			if (delayTime >= 60) {
+				pos 80, 250
+				font "ＭＳ Ｐゴシック", 36, 16
+				mes "この間もDefenderを設置できます。\nフィールドをクリックしましょう。"
+			}
+			
+			delayTime--
+		}
+	
+		if (0 <= mousePosX && mousePosX < FieldWidth) {
+			if (selectedDefenderID >= 0) {
+				buffer AtkRangeBufferID, WeaponAtkRange(selectedDefenderID)*2*FieldChipWidth, WeaponAtkRange(selectedDefenderID)*2*FieldChipHeight
+				color 0, 0, 0: boxf
+				
+				if (6 <= field(mouseMapX, mouseMapY) && field(mouseMapX, mouseMapY) <= 8 && curCoin >= DefenderSetCost(selectedDefenderID) && existDefender(mouseMapX, mouseMapY) == 0): color 0, 255, 0: else: color 255, 0, 0
+				circle 0, 0, WeaponAtkRange(selectedDefenderID)*2*FieldChipWidth, WeaponAtkRange(selectedDefenderID)*2*FieldChipHeight
+
+				gsel MainWindowID
+
+				color 0, 0, 0
+				gmode gmode_rgb0alpha, 48, 48, 127
+
+				pos mouseMapX*FieldChipWidth+FieldChipWidth/2 - WeaponAtkRange(selectedDefenderID)*FieldChipWidth, mouseMapY*FieldChipHeight+FieldChipHeight/2 - WeaponAtkRange(selectedDefenderID)*FieldChipHeight
+				gcopy AtkRangeBufferID, 0, 0, WeaponAtkRange(selectedDefenderID)*2*FieldChipWidth, WeaponAtkRange(selectedDefenderID)*2*FieldChipHeight
+
+				pos mouseMapX*FieldChipWidth, mouseMapY*FieldChipHeight
+				celput DefenderBufferID, selectedDefenderID
+
+				if (6 <= field(mouseMapX, mouseMapY) && field(mouseMapX, mouseMapY) <= 8 && curCoin >= DefenderSetCost(selectedDefenderID) && existDefender(mouseMapX, mouseMapY) == 0 && advKey == MouseLeft) {
+					curCoin -= DefenderSetCost(selectedDefenderID)
+					gosub *SetDefender
+					existDefender(mouseMapX, mouseMapY) = 1
+				}
+			} else {
+			}
+		}
+	
+		;ステータス表示
+		color 0, 0, $33: boxf FieldWidth, 0
+	
+		pos FieldWidth+8, 8
+		color $ff, $ff, $ff
+		font "ＭＳ Ｐゴシック", 24, 1
+		mes stageTitle(curSelectedStage-1)
+
+		pos ginfo_cx, ginfo_cy+8
+		font msgothic, 18
+		color $ff, $ff, $00: mes "　資　金　　" + curCoin
+		color $ff, $7f, $7f: mes "城の耐久値　" + curCastleHP + " / " + maxCastleHP
+		color $ff, $ff, $ff: mes "残りの敵数　" + nowEnemyNum
+	
+	
+		curx = ginfo_cx
+		cury = ginfo_cy+8
+	
+		;Normal defender
+		if (selectedDefenderID == 0): gmode 2: else: gmode gmode_rgb0alpha, 48, 48, 127
+		pos curx, cury: celput DefenderBufferID, 0	;通常
+		/*if (advKey == MouseLeft && curx <= mousePosX && mousePosX <= curx + FieldChipWidth && cury <= mousePosY && mousePosY <= cury + FieldChipHeight) {
+			if (selectedDefenderID != 0): selectedDefenderID = 0: else: selectedDefenderID = -1
+		}*/
+	
+		;選択defender情報
+		if (selectedDefenderID >= 0) {
+			font msgothic, 18, font_bold
+			color $ff, $ff, $ff
+			pos FieldWidth+8, ginfo_cy+FieldChipHeight+12
+			mes "<< Defenderの情報 >>"
+	
+			font msgothic, 18
+			pos ginfo_cx+18, ginfo_cy+4
+			color $ff, $ff, $00: mes "費　用　　" + DefenderSetCost(selectedDefenderID)
+			color $ff, $00, $00: mes "攻撃力　　" + WeaponAtk(selectedDefenderID)
+		}
+		
+		redraw 1
+		
+		await 16
+	loop
+	
+	stop
+
+*StageClear
+	buffer StageClearBufferID, WindowWidth, WindowHeight
+	color 0, 0, $33: boxf
+	pos 110, 140
+	font "Impact", 144
+	color 255, 127, 0
+	mes "Stage Clear!!"
+	
+	gsel MainWindowID
+	color 0, 0, 0
+	
+	repeat 256/ChangeSpeed
+		gmode gmode_rgb0alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy StageClearBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	gsel BackgroundBufferID
+	color 0, 0, $33: boxf
+	
+	await 500
+	
+	gsel MainWindowID
+	repeat 256/ChangeSpeed
+		gmode gmode_rgb0alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy BackgroundBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	buffer ResultBufferID, WindowWidth, WindowHeight
+	color 0, 0, $33: boxf
+	color 255, 255, 255
+	
+	font "Verdana", 54, font_italic|16
+	pos 8, 0: mes "Result -- " + stageTitle(curSelectedStage-1)
+	
+	font "Arial", 27, font_italic|16
+	color 255, 127, 0
+	pos 80, 100
+	if (curDifficulty == DifficultyHard): mes "Remaining HP of Castle\t\t\tx100": else: mes "Remaining HP of Castle\t\t\tx50"
+	line 80, 127+3, WindowWidth-80, 127+3
+	line 80-1, 128+3, WindowWidth-80-1, 128+3
+	pos 80, 150: mes "Destroyed Enemies\t\t\tx100"
+	line 80, 177+3, WindowWidth-80, 177+3
+	line 80-1, 178+3, WindowWidth-80-1, 178+3
+	pos 80, 200: mes "Remaining Coins\t\t\tx50"
+	line 80, 227+3, WindowWidth-80, 227+3
+	line 80-1, 228+3, WindowWidth-80-1, 228+3
+	pos 80, 350: mes "Total Score"
+	line 80, 377+3, WindowWidth-80, 377+3
+	line 80-1, 378+3, WindowWidth-80-1, 378+3
+	
+	await 500
+	
+	gsel MainWindowID
+	repeat 256/(ChangeSpeed/2)
+		color 0, 0, $33
+		gmode gmode_rgb0alpha, 48, 48, cnt*(ChangeSpeed/2)
+		pos 0, 0
+		gcopy ResultBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+
+	gsel ResultBufferID
+	
+	font "Arial", 27+13, font_italic|16
+	color 255, 255, 255
+	pos 530, 100-13: mes curCastleHP
+	
+	await 100
+	
+	gsel MainWindowID
+	repeat 256/(ChangeSpeed/2)
+		color 0, 0, $33
+		gmode gmode_rgb0alpha, 48, 48, cnt*(ChangeSpeed/2)
+		pos 0, 0
+		gcopy ResultBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+
+	gsel ResultBufferID
+	color 255, 255, 255
+	pos 530, 150-13: mes curDestroyEnemies
+	
+	await 100
+	
+	gsel MainWindowID
+	repeat 256/(ChangeSpeed/2)
+		color 0, 0, $33
+		gmode gmode_rgb0alpha, 48, 48, cnt*(ChangeSpeed/2)
+		pos 0, 0
+		gcopy ResultBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+
+	gsel ResultBufferID
+	color 255, 255, 255
+	pos 530, 200-13: mes curCoin
+	
+	await 100
+	
+	gsel MainWindowID
+	repeat 256/(ChangeSpeed/2)
+		color 0, 0, $33
+		gmode gmode_rgb0alpha, 48, 48, cnt*(ChangeSpeed/2)
+		pos 0, 0
+		gcopy ResultBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+
+	gsel ResultBufferID
+	color 255, 255, 255
+	pos 530, 350-13
+	if (curDifficulty == DifficultyHard): mes curCastleHP*100 + curDestroyEnemies*100 + curCoin*50: else: mes curCastleHP*50 + curDestroyEnemies*100 + curCoin*50
+	
+	font "ＭＳ Ｐゴシック", 27, 16
+	color 255, 255, 255
+	pos 130, 400: mes "しばらくするとステージ選択画面に戻ります。"
+	
+	await 300
+	
+	gsel MainWindowID
+	repeat 256/(ChangeSpeed/2)
+		color 0, 0, $33
+		gmode gmode_rgb0alpha, 48, 48, cnt*(ChangeSpeed/2)
+		pos 0, 0
+		gcopy ResultBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 2000
+	
+	return
+
+*GameOver
+	buffer GameOverBufferID, WindowWidth, WindowHeight
+	color 0, 0, $33: boxf
+	pos 110, 140
+	font "Impact", 144
+	color 255, 127, 0
+	mes "Game Over..."
+	
+	font "ＭＳ Ｐゴシック", 27, 16
+	color 255, 255, 255
+	pos 130, 400: mes "しばらくするとステージ選択画面に戻ります。"
+	
+	gsel MainWindowID
+	
+	color 0, 0, 0
+	repeat 256/ChangeSpeed
+		gmode gmode_rgb0alpha, 48, 48, cnt*ChangeSpeed
+		pos 0, 0
+		gcopy GameOverBufferID, 0, 0, WindowWidth, WindowHeight
+		await 16
+	loop
+	
+	await 2000
+	return

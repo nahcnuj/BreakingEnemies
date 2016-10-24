@@ -1,0 +1,105 @@
+/// "Tower Defence"用モジュール
+
+#module
+
+	/// IsOnMouse x, y, w, h, mx, my
+	///	点(x,y)から幅w、高さhの範囲にマウス(mx,my)があるか
+	///		x, y: 左上の座標
+	///		w, h: 高さ、幅
+	///		mx, my: マウスの座標
+	#defcfunc IsOnMouse int x, int y, int w, int h, int mx, int my
+		if (x <= mx && mx <= x+w && y <= my && my <= y+h): return 1: else: return 0
+
+#global
+
+/// モジュール Enemy	敵の情報を管理
+///		id:種類
+///		x, y:中心座標
+///		hp:現在の体力
+///		dx, dy:移動方向
+#module ModEnemy id, x, y, hp, dx, dy
+
+	///	コンストラクタ	出現時の敵の情報を設定する
+	///		id_:敵の種類
+	#modinit int id_
+		id = id_
+		x = double( FieldChipWidth@*portal_x@ + FieldChipWidth@/2 - EnemyWidth@(id_)/2 )
+		y = double( FieldChipHeight@*portal_y@ + FieldChipHeight@/2 - EnemyHeight@(id_)/2 )
+		hp = EnemyMaxHP(id_)
+		dx = 0.0: dy = 0.0
+		if (portal_x@ < FieldChipNumX@) {
+			if (0 <= field@(portal_x@+1, portal_y@) && field@(portal_x@+1, portal_y@) <= 5) {
+				dx = 2.0
+			}
+		}
+		if (portal_y@ > 0) {
+			if (0 <= field@(portal_x@, portal_y@-1) && field@(portal_x@, portal_y@-1) <= 5) {
+				dy = 2.0
+			}
+		}
+		if (portal_x@ > 0) {
+			if (0 <= field@(portal_x@-1, portal_y@) && field@(portal_x@-1, portal_y@) <= 5) {
+				dx = -2.0
+			}
+		}
+		if (portal_y@ < FieldChipNumY@) {
+			if (0 <= field@(portal_x@, portal_y@+1) && field@(portal_x@, portal_y@+1) <= 5) {
+				dy = -2.0
+			}
+		}
+		return
+	
+	///	敵をバッファに描画
+	#modfunc PaintEnemy
+		pos x, y
+		font msgothic, 18
+		color 255, 0, 0
+		mes "◆"
+		color 0, 0, 255: pset x + EnemyWidth@(id)/2, y + EnemyHeight@(id)/2
+		return
+	
+	///	敵を移動
+	#modfunc MoveEnemy
+		map_x = int(x + EnemyWidth@(id)/2) / FieldChipWidth@
+		map_y = int(y + EnemyHeight@(id)/2) / FieldChipHeight@
+		if (field@(map_x, map_y) == 39) {
+			x += dx
+			y -= dy
+		}
+		if (field@(map_x, map_y) == 0) {	;│
+			if (dy < 0): dy = -2.0: else: dy = 2.0
+			dx = 0.0
+			y -= dy
+		}
+		if (field@(map_x, map_y) == 1) {	;─
+			if (dx < 0): dx = -2.0: else: dx= 2.0
+			dy = 0.0
+			x += dx
+		}
+		if (field@(map_x, map_y) == 2) {	;┌
+			if (dx >= 0): dx = sqrt(2): else: dx = -sqrt(2)
+			if (dy > 0): dy = sqrt(2): else: dy = -sqrt(2)
+			x += dx
+			y -= dy
+		}
+		if (field@(map_x, map_y) == 3) {	;┐
+			if (dx > 0): dx = sqrt(2): else: dx = -sqrt(2)
+			if (dy > 0): dy = sqrt(2): else: dy = -sqrt(2)
+			x += dx
+			y -= dy
+		}
+		if (field@(map_x, map_y) == 4) {	;└
+			if (dx >= 0): dx = sqrt(2): else: dx = -sqrt(2)
+			if (dy >= 0): dy = sqrt(2): else: dy = -sqrt(2)
+			x += dx
+			y -= dy
+		}
+		if (field@(map_x, map_y) == 5) {	;┘
+			if (dx > 0): dx = sqrt(2): else: dx = -sqrt(2)
+			if (dy >= 0): dy = sqrt(2): else: dy = -sqrt(2)
+			x += dx
+			y -= dy
+		}
+		return
+
+#global

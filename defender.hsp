@@ -1,0 +1,109 @@
+*SetDefender
+	curDefenderNum++
+	defenderID(curDefenderNum-1) = selectedDefenderID
+	defenderMapX(curDefenderNum-1) = mouseMapX
+	defenderMapY(curDefenderNum-1) = mouseMapY
+	defenderAtk(curDefenderNum-1) = WeaponAtk(selectedDefenderID)
+	defenderAtkRange(curDefenderNum-1) = WeaponAtkRange(selectedDefenderID)
+	defenderGrade(curDefenderNum-1) = 1
+	defenderUpgradeCost(curDefenderNum-1) = NeedLvUpCost(selectedDefenderID)
+	defenderLive(curDefenderNum-1) = 1
+	defenderAtkRemainInterval(curDefenderNum-1) = 0
+	return
+
+*PaintDefenders
+	gmode 2
+	repeat curDefenderNum
+		if (defenderLive(cnt) == 0): continue
+		pos defenderMapX(cnt)*FieldChipWidth, defenderMapY(cnt)*FieldChipHeight
+		celput DefenderBufferID, defenderID(cnt)
+	loop
+	return
+
+*AttackEnemies
+	color 255, 0, 0
+	repeat curDefenderNum
+		xcnt = cnt
+		if (defenderLive(cnt) == 0): continue
+		repeat MaxDefenderWeaponNum
+			ycnt = cnt
+			if (defenderWeaponFlag(xcnt, ycnt) == 0 && defenderAtkRemainInterval(xcnt) <= 0) {
+				defenderWeaponX(xcnt, ycnt) = double(defenderMapX(xcnt)*FieldChipWidth+FieldChipWidth/2)
+				defenderWeaponY(xcnt, ycnt) = double(defenderMapY(xcnt)*FieldChipHeight+FieldChipHeight/2)
+	
+				//targetŒˆ’è (UŒ‚”ÍˆÍ“à‚©‚Â‹——£Å¬‚Ì“G)
+				targetNo = -1
+				dist = 0.0
+				distX = 0.0
+				distY = 0.0
+				minDist = 1000000000.0
+				minDistX = 0.0
+				minDistY = 0.0
+				repeat enemyNum
+					if (enemyLive(cnt) == 0): continue
+					distX = 0.0 + enemyX(cnt) + EnemyWidth(enemyID(cnt))/2 - defenderWeaponX(xcnt, ycnt) - WeaponWidth(defenderID(xcnt))/2
+					distY = 0.0 + enemyY(cnt) + EnemyHeight(enemyID(cnt))/2 - defenderWeaponY(xcnt, ycnt) - WeaponHeight(defenderID(xcnt))/2
+					dist = sqrt( distX*distX + distY*distY )
+					if (dist < minDist && dist <= WeaponAtkRange(defenderID(xcnt))*FieldChipWidth) {
+						minDist = dist
+						minDistX = distX
+						minDistY = distY
+						targetNo = cnt
+					}
+				loop
+				if (targetNo == -1): continue
+				angle = atan( minDistY, minDistX )
+				defenderWeaponDX(xcnt, ycnt) = WeaponMovement(defenderID(xcnt))*cos(angle)
+				defenderWeaponDY(xcnt, ycnt) = WeaponMovement(defenderID(xcnt))*sin(angle)
+				defenderWeaponFlag(xcnt, ycnt) = 1
+				defenderAtkRemainInterval(xcnt) = WeaponInterval(defenderID(xcnt))
+				break
+			}
+		loop
+	loop
+	return
+
+*PaintWeapons
+	repeat curDefenderNum
+		xcnt = cnt
+		if (defenderLive(xcnt) == 0): continue
+		repeat MaxDefenderWeaponNum
+			if (defenderWeaponFlag(xcnt, cnt) == 0): continue
+			gmode 2
+			pos defenderWeaponX(xcnt, cnt)-WeaponWidth(defenderID(xcnt))/2, defenderWeaponY(xcnt, cnt)-WeaponHeight(defenderID(xcnt))/2
+			gcopy NormalWeaponBufferID+defenderID(xcnt), 0, 0, WeaponWidth(defenderID(xcnt)), WeaponHeight(defenderID(xcnt))
+		loop
+	loop
+	return
+
+*MoveWeapons
+	repeat curDefenderNum
+		xcnt = cnt
+		if (defenderLive(xcnt) == 0): continue
+		repeat MaxDefenderWeaponNum
+			ycnt = cnt
+			if (defenderWeaponFlag(xcnt, cnt) == 0): continue
+			repeat enemyNum	;“G‚Æ‚Ì“–‚½‚è”»’è
+				dist = sqrt((enemyX(cnt) + EnemyWidth(enemyID(cnt))/2-defenderWeaponX(xcnt, ycnt))*(enemyX(cnt) + EnemyWidth(enemyID(cnt))/2-defenderWeaponX(xcnt, ycnt)) + (enemyY(cnt) + EnemyHeight(enemyID(cnt))/2-defenderWeaponY(xcnt, ycnt))*(enemyY(cnt) + EnemyHeight(enemyID(cnt))/2-defenderWeaponY(xcnt, ycnt)))
+				if (dist <= 10.0 && enemyLive(cnt) != 0) {
+					enemyHP(cnt) -= defenderAtk(xcnt)
+					if (enemyHP(cnt) <= 0) {
+						enemyLive(cnt) = 0
+						nowEnemyNum--
+						curCoin += EnemyCoin(enemyID(cnt))
+						curDestroyEnemies++
+					}
+					defenderWeaponFlag(xcnt, ycnt) = 0
+					break
+				}
+			loop
+			defenderWeaponX(xcnt, ycnt) += defenderWeaponDX(xcnt, ycnt)
+			defenderWeaponY(xcnt, ycnt) += defenderWeaponDY(xcnt, ycnt)
+			dist = sqrt((defenderMapX(xcnt)*FieldChipWidth+FieldChipWidth/2 - defenderWeaponX(xcnt, ycnt))*(defenderMapX(xcnt)*FieldChipWidth+FieldChipWidth/2 - defenderWeaponX(xcnt, ycnt)) + (defenderMapY(xcnt)*FieldChipHeight+FieldChipHeight/2 - defenderWeaponY(xcnt, ycnt))*(defenderMapY(xcnt)*FieldChipHeight+FieldChipHeight/2 - defenderWeaponY(xcnt, ycnt)))
+			if ( dist > WeaponAtkRange(defenderID(xcnt))*FieldChipWidth ) {
+				defenderWeaponFlag(xcnt, ycnt) = 0
+				break
+			}
+		loop
+	loop
+	return

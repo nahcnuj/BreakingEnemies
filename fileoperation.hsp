@@ -1,0 +1,247 @@
+;画像読み込み
+*LoadImages
+	;背景
+	buffer BackgroundImageBufferID, BackgroundImageWidth, BackgroundImageBeforeHeight: boxf
+	pos 0, 0
+	picload "images/background.jpg", 1
+	pos 0, 0
+	gzoom BackgroundImageWidth, BackgroundImageHeight, BackgroundImageBufferID, 0, 0, BackgroundImageBeforeWidth, 600, 1
+	width BackgroundImageWidth, BackgroundImageHeight
+
+	;タイトル
+	buffer TitleImageBufferID
+	picload "images/titlelogo.png"
+	
+	///	TODO:小さいタイトルロゴの表示 gamemenu, optionも合わせて変更
+	buffer SmallTitleImageBufferID
+	picload "images/smalltitlelogo.png"
+
+	;メニュー画像
+	;screen MenuChipBufferID
+	;picload "images/menuchip.bmp"
+	celload "images/menuchip.bmp", MenuChipBufferID
+	celdiv MenuChipBufferID, MenuChipWidth, MenuChipHeight, 0, 0
+	
+	;アイコン
+	buffer IconBufferID, 110, 105
+	picload "images/icon.bmp", 1
+	
+	;簡易ヘルプ背景
+	buffer MessageBackgroundImageBufferID, WindowWidth, WindowHeight
+	color 255, 255, 255
+	boxf
+
+	;オプション画像(Difficultyとか)
+	celload "images/optionchip.bmp", OptionChipBufferID
+	celdiv OptionChipBufferID, OptionChipWidth, OptionChipHeight
+	
+	;ステージリストの背景
+	buffer StageListItemBackgroundImageBufferID
+	picload "images/stagelistitemback.bmp", 2
+	
+	;マップチップ
+	celload "images/mapchip.bmp", FieldChipBufferID
+	celdiv FieldChipBufferID, FieldChipWidth, FieldChipHeight
+	
+	;defender画像
+	celload "images/defender.png", DefenderBufferID
+	celdiv DefenderBufferID, FieldChipWidth, FieldChipHeight
+	
+	buffer NormalWeaponBufferID, WeaponWidth(0), WeaponHeight(0)
+	picload "images/weapon0.png", 1
+
+	gsel 0
+	return
+
+;オプションロード
+*LoadSettingFile
+	notesel fileStr
+	noteload "setting.ini"
+	noteget strDifficulty, 0
+	noteget strBGMVolume, 1
+	noteget strSEVolume, 2
+
+	curDifficulty = int(strDifficulty)
+	curBGMVolume = int(strBGMVolume)
+	curSEVolume = int(strSEVolume)
+	return
+
+;オプションセーブ
+*SaveSettingFile
+	notesel fileStr
+	noteadd str(curDifficulty), 0, 1
+	noteadd str(curBGMVolume), 1, 1
+	noteadd str(curSEVolume), 2, 1
+	notesave "setting.ini"
+	return
+
+;ステージ読み込み
+*LoadStageFile
+	sdim strField, FieldChipNumX, FieldChipNumY
+	stageDescription = ""
+	notesel stageFileContent
+	noteload "stages/" + stageFileName(curSelectedStage-1)
+	repeat 5, 1
+		noteget temp, cnt
+		stageDescription += temp + "\n"
+	loop
+	repeat FieldChipNumY, 6
+		noteget strField(cnt-6), cnt
+	loop
+	return
+
+*PaintFieldToBuffer
+	dim field, FieldChipNumX, FieldChipNumY	;celputの第2引数
+	sdim hoge, 2, 8
+	
+	buffer FieldBufferID, FieldWidth, FieldHeight
+	gmode 2
+	repeat FieldChipNumY
+		y = cnt
+		repeat FieldChipNumX
+			x = cnt
+	
+			field(x, y) = -1
+	
+			repeat 8
+				hoge(cnt) = "--"
+			loop
+	
+			tempCM = strmid(strField(y), x*2, 2)
+			if (x > 0): hoge(3) = strmid(strField(y), (x-1)*2, 2)
+			if (x < FieldChipNumX): hoge(4) = strmid(strField(y), (x+1)*2, 2)
+			
+			if (y > 0) {
+				hoge(1) = strmid(strField(y-1), x*2, 2)
+				if (x > 0): hoge(0) = strmid(strField(y-1), (x-1)*2, 2)
+				if (x < FieldChipNumX): hoge(2) = strmid(strField(y-1), (x+1)*2, 2)
+			}
+			if (y < FieldChipNumY) {
+				hoge(6) = strmid(strField(y+1), x*2, 2)
+				if (x > 0): hoge(5) = strmid(strField(y+1), (x-1)*2, 2)
+				if (x < FieldChipNumX): hoge(7) = strmid(strField(y+1), (x+1)*2, 2)
+			}
+	
+			di = 0: gr = 0: st = 0
+			repeat 8
+				if (hoge(cnt) = "di"): di++
+				if (hoge(cnt) = "gr"): gr++
+				if (hoge(cnt) = "st"): st++
+			loop
+			
+			pos x*FieldChipWidth, y*FieldChipHeight
+			if (di > gr && di > st) {
+				celput FieldChipBufferID, 6
+			} else {
+				if (gr > di && gr > st) {
+					celput FieldChipBufferID, 7
+				} else {
+					celput FieldChipBufferID, 8
+				}
+			}
+
+			if (tempCM == "ro") {	;道路
+				if (hoge(1) == "ro" || hoge(1) == "ca" || hoge(1) == "po"): flagT = 1: else: flagT = 0
+				if (hoge(4) == "ro" || hoge(4) == "ca" || hoge(4) == "po"): flagR = 1: else: flagR = 0
+				if (hoge(6) == "ro" || hoge(6) == "ca" || hoge(6) == "po"): flagB = 1: else: flagB = 0
+				if (hoge(3) == "ro" || hoge(3) == "ca" || hoge(3) == "po"): flagL = 1: else: flagL = 0
+	
+				if (flagT && flagB): field(x, y) = 0
+				if (flagL && flagR): field(x, y) = 1
+				if (flagR && flagB): field(x, y) = 2
+				if (flagL && flagB): field(x, y) = 3
+				if (flagR && flagT): field(x, y) = 4
+				if (flagL && flagT): field(x, y) = 5
+			}
+			if (tempCM == "di") {	;土
+				field(x, y) = 6
+			}
+			if (tempCM == "gr") {	;草原
+				field(x, y) = 7
+			}
+			if (tempCM == "st") {	;石
+				field(x, y) = 8
+			}
+			if (tempCM == "tr") {	;森林
+				field(x, y) = 40
+				if ((hoge(3) != "tr") && (hoge(4) == "tr")) {
+					field(x, y) = 9
+				}
+				if ((hoge(3) == "tr") && (hoge(4) == "tr")) {
+					field(x, y) = 10
+				}
+				if ((hoge(3) == "tr") && (hoge(4) != "tr")) {
+					field(x, y) = 11
+				}
+			}
+			if (tempCM == "wa") {	;水
+				flag = %00000000
+				if (hoge(0) == "wa"): flag |= %10000000
+				if (hoge(1) == "wa"): flag |= %01000000
+				if (hoge(2) == "wa"): flag |= %00100000
+				if (hoge(3) == "wa"): flag |= %00010000
+				if (hoge(4) == "wa"): flag |= %00001000
+				if (hoge(5) == "wa"): flag |= %00000100
+				if (hoge(6) == "wa"): flag |= %00000010
+				if (hoge(7) == "wa"): flag |= %00000001
+				
+				field(x, y) = 31
+
+				if ((flag & %00001000) == %00001000): field(x, y) = 12	;右隣
+				if ((flag & %00010000) == %00010000): field(x, y) = 13	;左隣
+				if ((flag & %00000010) == %00000010): field(x, y) = 14	;真下
+				if ((flag & %01000000) == %01000000): field(x, y) = 15	;真上
+
+				if ((flag & %01000010) == %01000010): field(x, y) = 16	;真上,真下
+				if ((flag & %00011000) == %00011000): field(x, y) = 17	;左隣,右隣
+				if ((flag & %00001010) == %00001010): field(x, y) = 18	;右隣,真下
+				if ((flag & %00010010) == %00010010): field(x, y) = 19	;左隣,真下
+				if ((flag & %01001000) == %01001000): field(x, y) = 20	;右隣,真上
+				if ((flag & %01010000) == %01010000): field(x, y) = 21	;左隣,真上
+	
+				if ((flag & %00001011) == %00001011): field(x, y) = 22	;右隣,真下,右下
+				if ((flag & %00010110) == %00010110): field(x, y) = 24	;左隣,左下,真下
+				if ((flag & %01101000) == %01101000): field(x, y) = 28	;真上,右上,右隣
+				if ((flag & %11010000) == %11010000): field(x, y) = 30	;左上,真上,左隣
+				
+				if ((flag & %00011111) == %00011111): field(x, y) = 23	;左隣,右隣,左下,真下,右下
+				if ((flag & %01101011) == %01101011): field(x, y) = 25	;真上,右上,右隣,真下,右下
+				if ((flag & %11010110) == %11010110): field(x, y) = 27	;左上,真上,左隣,左下,真下
+				if ((flag & %11111000) == %11111000): field(x, y) = 29	;左上,真上,右上,左隣,右隣
+				
+				if ((flag & %11111111) == %11111111): field(x, y) = 26	;8方向すべて
+			}
+			if (tempCM == "ca") {	;城
+				pos x*FieldChipWidth, y*FieldChipHeight
+				if (hoge(1) == "ro") {
+					celput FieldChipBufferID, 32
+				}
+				if (hoge(3) == "ro") {
+					celput FieldChipBufferID, 33
+				}
+				if (hoge(6) == "ro") {
+					celput FieldChipBufferID, 34
+				}
+				if (hoge(4) == "ro") {
+					celput FieldChipBufferID, 35
+				}
+	
+				if (curDifficulty == DifficultyEasy): field(x, y) = 36
+				if (curDifficulty == DifficultyNormal): field(x, y) = 37
+				if (curDifficulty == DifficultyHard): field(x, y) = 38
+			}
+			if (tempCM == "po") {	;ポータル(敵が出現する場所)
+				field(x, y)= 39
+				portal_x = x
+				portal_y = y
+			}
+			
+			if (field(x, y) >= 0) {
+				pos x*FieldChipWidth, y*FieldChipHeight
+				celput FieldChipBufferID, field(x, y)
+			}
+		loop
+	loop
+	
+	gsel MainWindowID
+	return

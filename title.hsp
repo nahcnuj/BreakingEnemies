@@ -1,0 +1,93 @@
+*TitleMenu
+	repeat 256/(ChangeSpeed/2)
+		redraw 0
+		;îwåiï`âÊ
+		gmode 0
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, BackgroundImageHeight
+		
+		gmode gmode_alpha, TitleImageWidth, TitleImageHeight, cnt*(ChangeSpeed/2)
+		pos (WindowWidth-TitleImageWidth)/2, 64-16
+		gcopy TitleImageBufferID, 0, 0, TitleImageWidth, TitleImageHeight
+
+		gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+		pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+		gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth/TitleImageAlphaStep*cnt, MessageBackgroundImageHeight
+		redraw 1
+		await 16
+	loop
+
+	repeat -1
+		stick advKey, 0
+		mousePosX = mousex
+		mousePosY = mousey
+	
+		message = AppInfo
+	
+		redraw 0
+
+		;îwåiï`âÊ
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, BackgroundImageHeight
+
+		;ä»à’ÉwÉãÉvï`âÊ
+		pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+		gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+		gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth, MessageBackgroundImageHeight
+		pos 16, WindowHeight-32
+		color 0, 0, 0
+		font "ÇlÇr ÇoÉSÉVÉbÉN", 16
+		mes message
+
+		;É^ÉCÉgÉãï`âÊ
+		gmode 0
+		pos (WindowWidth-TitleImageWidth)/2, 64-16
+		gcopy TitleImageBufferID, 0, 0, TitleImageWidth, TitleImageHeight
+
+		gmode 0
+
+		;ÉÅÉjÉÖÅ[ï`âÊ
+		;Play Game
+		pos (WindowWidth-MenuchipWidth)/2, 200-32-8
+		IsMouseOnPlayGame = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (IsMouseOnPlayGame) {
+			celput MenuChipBufferID, 1
+			message = "ÉÇÅ[ÉhëIëâÊñ Ç…à⁄ÇËÇ‹Ç∑ÅB"
+		} else {
+			celput MenuChipBufferID, 0
+		}
+
+		;Option
+		pos (WindowWidth-MenuchipWidth)/2, 264-8-8
+		IsMouseOnOption = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (IsMouseOnOption) {
+			celput MenuChipBufferID, 3
+			message = "ê›íËâÊñ Ç…à⁄ÇËÇ‹Ç∑ÅB"
+		} else {
+			celput MenuChipBufferID, 2
+		}
+
+		;Quit
+		pos (WindowWidth-MenuchipWidth)/2, 328+16-8
+		IsMouseOnQuit = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (IsMouseOnQuit) {
+			celput MenuChipBufferID, 7
+			message = "ÉQÅ[ÉÄÇèIóπÇµÇ‹Ç∑ÅB"
+		} else {
+			celput MenuChipBufferID, 6
+		}
+
+		redraw 1
+
+		if (advKey & MouseLeft) {
+			;Play Game
+			if (isMouseOnPlayGame): goto *SelectStage;PlayGame
+			;Option
+			if (isMouseOnOption): goto *Option
+			;Quit
+			if (isMouseOnQuit): goto *Quit
+		}
+
+		await 16
+	loop
+	stop

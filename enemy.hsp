@@ -1,0 +1,101 @@
+*SetEnemies
+	notesel stageFileContent
+	noteload "stages/" + stageFileName(curSelectedStage-1)
+
+	noteget temp, 16
+	enemyNum = int(temp)
+	
+	dim enemyID, enemyNum	;“G‚Ìí—Ş
+	dim enemyTime, enemyNum	;“G‚ÌoŒ»ŠÔ
+	dim enemyLive, enemyNum	;“G‚Ì¶€ (¶=1, €=0)
+	ddim enemyX, enemyNum	;“G‚Ì’†SÀ•W
+	ddim enemyY, enemyNum
+	dim enemyHP, enemyNum	;“G‚ÌŒ»İ‚Ì‘Ì—Í
+	ddim enemyDX, enemyNum	;“G‚ÌˆÚ“®—Ê
+	ddim enemyDY, enemyNum
+	
+	k = 17
+	repeat enemyNum
+		noteget temp2, k
+		k++
+		split temp2, ",", buf1, buf2
+		enemyTime(cnt) = int(buf1)
+		enemyID(cnt) = int(buf2)
+		enemyLive(cnt) = 0
+		enemyX(cnt) = double( FieldChipWidth*portal_x + FieldChipWidth/2 - EnemyWidth(enemyID(cnt))/2 + rnd(6)-3 )
+		enemyY(cnt) = double( FieldChipHeight*portal_y + FieldChipHeight/2 - EnemyHeight(enemyID(cnt))/2 + rnd(6)-3 )
+		enemyHP(cnt) = EnemyMaxHP(enemyID(cnt))
+		enemyDX(cnt) = 0.0
+		enemyDY(cnt) = 0.0
+		if (portal_x < FieldChipNumX) {
+			if (0 <= field(portal_x+1, portal_y) && field(portal_x+1, portal_y) <= 5) {
+				enemyDX(cnt) = 0.5+0.125*curDifficulty
+			}
+		}
+		if (portal_y > 0) {
+			if (0 <= field(portal_x, portal_y-1) && field(portal_x, portal_y-1) <= 5) {
+				enemyDY(cnt) = 0.5+0.125*curDifficulty
+			}
+		}
+		if (portal_x > 0) {
+			if (0 <= field(portal_x-1, portal_y) && field(portal_x-1, portal_y) <= 5) {
+				enemyDX(cnt) = -0.5+0.125*curDifficulty
+			}
+		}
+		if (portal_y < FieldChipNumY) {
+			if (0 <= field(portal_x, portal_y+1) && field(portal_x, portal_y+1) <= 5) {
+				enemyDY(cnt) = -0.5+0.125*curDifficulty
+			}
+		}
+	loop
+	return
+
+*PaintEnemies
+	repeat enemyNum
+		if (enemyLive(cnt) == 0): continue
+		pos enemyX(cnt), enemyY(cnt)
+		color 255, 0, 0
+		mes "Ÿ"
+	loop
+	return
+
+*MoveEnemies
+	repeat enemyNum
+		if (enemyLive(cnt) == 0): continue
+		map_x = int(enemyX(cnt) + EnemyWidth(enemyID(cnt))/2) / FieldChipWidth
+		map_y = int(enemyY(cnt) + EnemyHeight(enemyID(cnt))/2) / FieldChipHeight
+	
+		if (36 <= field(map_x, map_y) && field(map_x, map_y) <= 38) {	;é‚ÉÚG
+			enemyLive(cnt) = 0
+			curCastleHP -= EnemyAtk(enemyID(cnt))
+			nowEnemyNum--
+		}
+	
+		if (field(map_x, map_y) == 0) {	;„ 
+			if (enemyDY(cnt) < 0): enemyDY(cnt) = -0.5-0.125*curDifficulty: else: enemyDY(cnt) = 0.5+0.125*curDifficulty
+			enemyDX(cnt) = 0.0
+		}
+		if (field(map_x, map_y) == 1) {	;„Ÿ
+			if (enemyDX(cnt) < 0): enemyDX(cnt) = -0.5-0.125*curDifficulty: else: enemyDX(cnt) = 0.5+0.125*curDifficulty
+			enemyDY(cnt) = 0.0
+		}
+		if (field(map_x, map_y) == 2) {	;„¡
+			if (enemyDX(cnt) >= 0): enemyDX(cnt) = 0.5+0.125*curDifficulty: else: enemyDX(cnt) = -0.5-0.125*curDifficulty
+			if (enemyDY(cnt) > 0): enemyDY(cnt) = 0.5+0.125*curDifficulty: else: enemyDY(cnt) = -0.5-0.125*curDifficulty
+		}
+		if (field(map_x, map_y) == 3) {	;„¢
+			if (enemyDX(cnt) > 0): enemyDX(cnt) = 0.5+0.125*curDifficulty: else: enemyDX(cnt) = -0.5-0.125*curDifficulty
+			if (enemyDY(cnt) > 0): enemyDY(cnt) = 0.5+0.125*curDifficulty: else: enemyDY(cnt) = -0.5-0.125*curDifficulty
+		}
+		if (field(map_x, map_y) == 4) {	;„¤
+			if (enemyDX(cnt) >= 0): enemyDX(cnt) = 0.5+0.125*curDifficulty: else: enemyDX(cnt) = -0.5-0.125*curDifficulty
+			if (enemyDY(cnt) >= 0): enemyDY(cnt) = 0.5+0.125*curDifficulty: else: enemyDY(cnt) = -0.5-0.125*curDifficulty
+		}
+		if (field(map_x, map_y) == 5) {	;„£
+			if (enemyDX(cnt) > 0): enemyDX(cnt) = 0.5+0.125*curDifficulty: else: enemyDX(cnt) = -0.5-0.125*curDifficulty
+			if (enemyDY(cnt) >= 0): enemyDY(cnt) = 0.5+0.125*curDifficulty: else: enemyDY(cnt) = -0.5-0.125*curDifficulty
+		}
+		enemyX(cnt) += enemyDX(cnt)
+		enemyY(cnt) -= enemyDY(cnt)
+	loop
+	return

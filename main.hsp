@@ -1,0 +1,246 @@
+	#define WindowWidth 960
+	#define WindowHeight 480
+
+	#define AppTitle "Breaking Enemies"
+	#define AppVer "1.00"
+	#define AppDeveloper "林 純一"
+	#define AppDeveloperBelongClass "電気工学科2年"
+	#define AppDeveloperBelongClub "電子計算機部"
+	#define AppInfo "Version " + AppVer + "\tDeveloper : " + AppDeveloper + " (" + AppDeveloperBelongClass + ", " + AppDeveloperBelongClub + "所属)"
+
+	#define TitleImageWidth 592
+	#define TitleImageHeight 64
+	#define TitleImageAlphaStep 96
+
+	#define SmallTitleImageWidth 446
+	#define SmallTitleImageHeight 48
+
+	#define BackgroundImageWidth WindowWidth
+	#define BackgroundImageHeight WindowHeight
+	#define BackgroundImageBeforeWidth 800
+	#define BackgroundImageBeforeHeight 600
+
+	#define MenuChipImageWidth 512
+	#define MenuChipImageHeight 768
+	#define MenuChipWidth 256
+	#define MenuChipHeight 64
+	
+	#define OptionBackgroundImageWidth 640
+	#define OptionBackgroundImageHeight 64
+	
+	#define MessageBackgroundImageWidth WindowWidth
+	#define MessageBackgroundImageHeight 36
+	
+	#define OptionFocusAreaWidth 800
+	#define OptionFocusAreaHeight 64
+	
+	#define OptionChipWidth 128
+	#define OptionChipHeight 64
+	#const OptionItemWidth OptionChipWidth*7
+	#define OptionItemHeight OptionChipHeight
+
+	#define StageListItemWidth 480
+	#define StageListItemHeight 48
+	
+	#define FieldChipWidth 48
+	#define FieldChipHeight 48
+	#define FieldChipNumX 15
+	#define FieldChipNumY 10
+	#const FieldWidth FieldChipWidth*FieldChipNumX
+	#const FieldHeight FieldChipHeight*FieldChipNumY
+	#const MaxDefenderNum FieldChipNumX*FieldChipNumY
+	#const MaxDefenderWeaponNum 3
+	
+	#define EnemyBufferWidth FieldWidth
+	#define EnemyBufferHeight FieldHeight
+
+	#define MouseLeft 256
+	#define KeyUp 2
+	#define KeyDown 8
+	#define KeyEnter 32
+	#define KeyESC 128
+	#define qKey 81
+	
+	#define ChangeSpeed 6
+
+	#enum MainWindowID = 0
+	#enum BackgroundImageBufferID
+	#enum TitleImageBufferID
+	#enum SmallTitleImageBufferID
+	#enum MenuChipBufferID
+	#enum IconBufferID
+	#enum OptionBackgroundImageBufferID
+	#enum MessageBackgroundImageBufferID
+	#enum OptionChipBufferID
+	#enum StageListItemBackgroundImageBufferID
+	#enum FieldChipBufferID
+	#enum FieldBufferID
+	#enum EnemyBufferID
+	#enum DefenderBufferID
+	#enum AtkRangeBufferID
+	#enum NormalWeaponBufferID
+	#enum BackgroundBufferID
+	#enum StageClearBufferID
+	#enum GameOverBufferID
+	#enum ResultBufferID
+	
+	#enum VolumeSilent = 0
+	#enum VolumeSoft
+	#enum VolumeMedium
+	#enum VolumeLoud
+
+	#enum DifficultyEasy = 0
+	#enum DifficultyNormal
+	#enum DifficultyHard
+	
+	#define EnemyIDNum 1
+	#define DefenderIDNum 1	;weaponのIDも兼用
+
+	#enum EnemyTypeWeak = 0	;雑魚
+	
+	#enum WeaponTypeNormal = 0	;通常
+
+	///	敵の最大体力
+	dim EnemyMaxHP, EnemyIDNum
+	EnemyMaxHP = 5
+	
+	///	敵の幅
+	dim EnemyWidth, EnemyIDNum
+	EnemyWidth = 18
+	
+	///	敵の高さ
+	dim EnemyHeight, EnemyIDNum
+	EnemyHeight = 18
+	
+	///	敵の攻撃力 (城に接触したとき)
+	dim EnemyAtk, EnemyIDNum
+	EnemyAtk = 3
+	
+	///	弾の発射間隔 (フレーム数)
+	dim WeaponInterval, DefenderIDNum
+	WeaponInterval = 300
+	
+	///	弾の幅
+	dim WeaponWidth, DefenderIDNum
+	WeaponWidth = 8
+	
+	///	弾の高さ
+	dim WeaponHeight, DefenderIDNum
+	WeaponHeight = 8
+	
+	///	弾の攻撃力
+	dim WeaponAtk, DefenderIDNum
+	WeaponAtk = 3
+	
+	/// 弾の攻撃範囲 (48pxを1)
+	ddim WeaponAtkRange, DefenderIDNum
+	WeaponAtkRange = 2.0
+	
+	///	レベルアップに必要なコスト
+	dim NeedLvUpCost, DefenderIDNum
+	NeedLvUpCost = 0	;相場?決めてから
+	
+	///	レベルアップに必要なコストの上昇量
+	dim NeedLvUpCostUp, DefenderIDNum
+	NeedLvUpCostUp = 0	;同上
+	
+	///	レベルアップ時の攻撃力上昇量
+	dim DefenderAtkUp, DefenderIDNum
+	DefenderAtkUp = 1
+	
+	/// レベルアップ時の攻撃範囲の拡大量 (48pxを1)
+	ddim DefenderAtkRangeWide, DefenderIDNum
+	DefenderAtkRangeWide = 0.25
+	
+	///	設置コスト
+	dim DefenderSetCost, DefenderIDNum
+	DefenderSetCost = 3
+	
+	/// 弾の発射間隔
+	dim WeaponInterval, DefenderIDNum
+	WeaponInterval = 16*3
+	
+	ddim WeaponMovement, DefenderIDNum
+	WeaponMovement = 3.0
+	
+	dim EnemyCoin, EnemyIDNum
+	EnemyCoin = 5
+	
+	
+	dim defenderID, MaxDefenderNum	;種類
+	dim defenderLive, MaxDefenderNum	;城があるか(1=ある 0=ない)
+	dim defenderMapX, MaxDefenderNum	;配置場所(マップの座標)
+	dim defenderMapY, MaxDefenderNum
+	dim defenderAtk, MaxDefenderNum	;攻撃力
+	ddim defenderAtkRange, MaxDefenderNum	;攻撃範囲(円の半径,48pxを1)
+	dim defenderAtkRemainInterval, MaxDefenderNum	;攻撃間隔
+	dim defenderGrade, MaxDefenderNum	;グレード(最大3)
+	dim defenderUpgradeCost, MaxDefenderNum	;グレードアップに必要なコスト
+
+	dim defenderWeaponFlag, MaxDefenderNum, MaxDefenderWeaponNum	;弾があるか(1=ある 0=ない)
+	ddim defenderWeaponX, MaxDefenderNum, MaxDefenderWeaponNum	;弾の中心座標
+	ddim defenderWeaponY, MaxDefenderNum, MaxDefenderWeaponNum
+	ddim defenderWeaponDX, MaxDefenderNum, MaxDefenderWeaponNum	;弾の移動方向
+	ddim defenderWeaponDY, MaxDefenderNum, MaxDefenderWeaponNum
+
+
+	#include "llmod3/llmod3.hsp"
+	#include "modules.hsp"
+	
+	randomize
+
+*EntryPoint
+	sdim difficulty, 6, 3
+	difficulty = "Easy", "Normal", "Hard"
+
+	curDifficulty = DifficultyNormal
+	curBGMVolume = VolumeMedium
+	curSEVolume = VolumeMedium
+	
+	gosub *LoadImages
+	
+	/*font msgothic, 16
+
+	pos 4, 4
+	mes "画像読み込み中..."
+	gosub *LoadImages
+	
+	pos 4, ginfo_cy+2
+	mes "画像読み込み完了"
+	
+	;pos 4, ginfo_cy+2+16
+	;mes "BGM,SE読み込み中..."
+	;gosub *LoadMusic
+	
+	;pos 4, ginfo_cy+2
+	;mes "BGM,SE読み込み完了"
+
+	pos 4, ginfo_cy+2+16
+	mes "設定ファイル読み込み中..."
+	;gosub *LoadSettingFile	//高専祭用
+	
+	pos 4, ginfo_cy+2
+	mes "設定ファイル読み込み完了"
+	
+	await 300*/
+
+
+	bgscr MainWindowID, WindowWidth, WindowHeight, 4, (ginfo(20)-WindowWidth)/2, (ginfo(21)-WindowHeight)/2
+	title ""+AppTitle+" "+AppVer
+	
+	goto *TitleMenu
+
+	#include "title.hsp"
+	#include "option.hsp"
+	#include "gamemenu.hsp"
+	#include "game.hsp"
+	#include "enemy.hsp"
+	#include "defender.hsp"
+	#include "fileoperation.hsp"
+	#include "tutorial.hsp"
+
+	font msgothic, 16
+	stop
+
+*Quit
+	end

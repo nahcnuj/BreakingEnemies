@@ -1,0 +1,236 @@
+/*PlayGame
+	repeat WindowHeight/ChangeSpeed, 1
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, cnt*ChangeSpeed
+		await 16
+	loop
+	
+	color 255, 255, 255
+
+	repeat
+		stick advKey, 0
+		getkey stdKey, qKey
+		mousePosX = mousex
+		mousePosY = mousey
+
+		redraw 0
+
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, BackgroundImageHeight
+
+		;タイトル描画
+		gmode 0
+		pos (WindowWidth-TitleImageWidth)/2, 64-16
+		gcopy TitleImageBufferID, 0, 0, TitleImageWidth, TitleImageHeight
+
+		;簡易ヘルプ描画
+		pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+		gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+		gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth, MessageBackgroundImageHeight
+		pos 16, WindowHeight-32
+		color 0, 0, 0
+		font "ＭＳ Ｐゴシック", 16
+		mes message
+
+		message = "【操作方法】　[ESC]：1つ前の画面に戻る　[Q]：ゲームを終了する"
+
+		gmode 0
+
+		;Story Mode
+		/*pos (WindowWidth-2*MenuChipWidth-32)/2, 200-32-8-16
+		isMouseOnStoryMode = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (isMouseOnStoryMode) {
+			celput MenuChipBufferID, 9
+			message = "Stage 1から順番にプレイできません。"
+		} else {
+			celput MenuChipBufferID, 8
+		}/
+
+		;Free Mode
+		pos (WindowWidth-MenuchipWidth)/2, 200-32-8-16
+		isMouseOnFreeMode = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (isMouseOnFreeMode) {
+			celput MenuChipBufferID, 11
+			message = "自由にステージを選択してプレイできます。"
+		} else {
+			celput MenuChipBufferID, 10
+		}
+
+		;Tutorial
+		/*pos (WindowWidth-MenuchipWidth)/2, 264-8-8-16
+		IsMouseOnTutorial = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (IsMouseOnTutorial) {
+			celput MenuChipBufferID, 5
+			message = "このゲームの操作やルール説明を見れません。"
+		} else {
+			celput MenuChipBufferID, 4
+		}/
+
+		;Back
+		pos (WindowWidth-MenuchipWidth)/2, 328+16-8-16
+		IsMouseOnBack = IsOnMouse( ginfo_cx, ginfo_cy, MenuChipWidth, MenuChipHeight, mousePosX, mousePosY )
+		if (IsMouseOnBack) {
+			celput MenuChipBufferID, 13
+			message = "タイトル画面に戻ります。"
+		} else {
+			celput MenuChipBufferID, 12
+		}
+
+		redraw 1
+
+		if (advKey & MouseLeft) {
+			;Story Mode
+			;if (isMouseOnStoryMode): goto *StoryMode
+			
+			;Free Mode
+			if (isMouseOnFreeMode): goto *SelectStage
+
+			;Tutorial
+			;if (isMouseOnTutorial): goto *Tutorial
+
+			;Back
+			if (isMouseOnBack): goto *TitleMenu
+		}
+	
+		if (stdKey == 1): goto *Quit
+
+		await 16
+	loop
+	
+	stop
+*/
+*SelectStage
+	sdim stageFileName, 32, stageNum
+	sdim stageTitle, 32, stageNum
+	
+	notesel stageFileList
+	dirlist stageFileList, "stages/*.stg", 3
+	stageNum = notemax
+	repeat stageNum
+		noteget stageFileName(cnt), cnt
+	loop
+	
+	notesel stageFileContent
+	repeat stageNum
+		noteload "stages/" + stageFileName(cnt)
+		noteget stageTitle(cnt), 0
+	loop
+	
+	repeat WindowHeight/ChangeSpeed, 1
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, cnt*ChangeSpeed
+		await 16
+	loop
+	
+	;タイトル描画
+	gmode 0
+	pos (WindowWidth-SmallTitleImageWidth)/2, 64-16-32
+	gcopy SmallTitleImageBufferID, 0, 0, SmallTitleImageWidth, SmallTitleImageHeight
+		
+	;簡易ヘルプ描画
+	pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+	gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+	gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth, MessageBackgroundImageHeight
+	pos 16, WindowHeight-32
+	color 0, 0, 0
+	font "ＭＳ Ｐゴシック", 16
+	mes "【操作方法】　[↑][↓]：ステージ選択　[Enter]：決定　[ESC]：戻る　[Q]：ゲームを終了する"
+	
+	curSelectedStage = 1
+	
+	gmode 2
+	
+	repeat
+		stick advKey
+		getkey stdKey, qKey
+		
+		redraw 0
+
+		pos 0, 16+SmallTitleImageHeight+16
+		gcopy BackgroundImageBufferID, 0, 16+SmallTitleImageHeight+16, BackgroundImageWidth, BackgroundImageHeight-(16+SmallTitleImageHeight+16)-MessageBackgroundImageHeight*2
+	
+		font "Meiryo", 32, 1|16
+		repeat 5, -2
+			if ((1 <= curSelectedStage+cnt) && (curSelectedStage+cnt <= stageNum)) {
+				pos (WindowWidth-StageListItemWidth)/2, 16+SmallTitleImageHeight+16+(StageListItemHeight+16)*(cnt+2)+24
+				gcopy StageListItemBackgroundImageBufferID, 0, 0, StageListItemWidth, StageListItemHeight
+				curPosX = ginfo_cx
+				curPosY = ginfo_cy
+				if (cnt == 0) {
+					color 255, 127, 0
+					pos curPosX+32, curPosY
+					mes "◆"
+					color 0, 0, 0
+				}
+				pos curPosX+32+32, curPosY+2
+				mes stageTitle(curSelectedStage+cnt-1)
+			}
+		loop
+
+		redraw 1
+	
+		if (advKey & KeyUp): if (curSelectedStage > 1): curSelectedStage--
+		if (advKey & KeyDown): if (curSelectedStage < stageNum): curSelectedStage++
+		if (advKey & KeyEnter): goto *ShowStageDescription
+		if (advKey & KeyESC): goto *TitleMenu;PlayGame
+		if (stdKey == 1): goto *Quit
+
+		await 16
+	loop
+	
+	stop
+
+*ShowStageDescription
+	gosub *LoadStageFile
+
+	repeat WindowHeight/ChangeSpeed, 1
+		pos 0, 0
+		gcopy BackgroundImageBufferID, 0, 0, BackgroundImageWidth, cnt*ChangeSpeed
+		await 16
+	loop
+	
+	;タイトル描画
+	gmode 0
+	pos (WindowWidth-SmallTitleImageWidth)/2, 64-16-32
+	gcopy SmallTitleImageBufferID, 0, 0, SmallTitleImageWidth, SmallTitleImageHeight
+		
+	;簡易ヘルプ描画
+	pos 0, WindowHeight-32-MessageBackgroundImageHeight/4
+	gmode 3, MessageBackgroundImageWidth, MessageBackgroundImageHeight, 127
+	gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth, MessageBackgroundImageHeight
+	pos 16, WindowHeight-32
+	color 0, 0, 0
+	font "ＭＳ Ｐゴシック", 16
+	mes "【操作方法】　[Enter]：このステージをプレイする　[ESC]：戻る　[Q]：ゲームを終了する"
+
+	pos 0, 16+SmallTitleImageHeight+16
+	gcopy BackgroundImageBufferID, 0, 16+SmallTitleImageHeight+16, BackgroundImageWidth, BackgroundImageHeight-(16+SmallTitleImageHeight+16)-MessageBackgroundImageHeight*2
+	
+	pos 32, 16+SmallTitleImageHeight+16+8+StageListItemHeight/2
+	gmode 3, MessageBackgroundImageWidth-32*2, MessageBackgroundImageHeight, 190
+	gcopy MessageBackgroundImageBufferID, 0, 0, MessageBackgroundImageWidth-32*2, MessageBackgroundImageHeight*8
+
+	font "Meiryo", 32, 1|16
+	pos 32, 16+SmallTitleImageHeight+16+8
+	gmode 2
+	gcopy StageListItemBackgroundImageBufferID, 0, 0, StageListItemWidth, StageListItemHeight
+	pos ginfo_cx+32, ginfo_cy+2
+	mes stageTitle(curSelectedStage-1)
+	
+	font "Meiryo", 24, 16
+	pos 48, 16+SmallTitleImageHeight+16+8+StageListItemHeight+32
+	mes stageDescription
+	
+	repeat
+		stick advKey
+		getkey stdKey, qKey
+	
+		if (advKey & KeyEnter): goto *Main
+		if (advKey & KeyESC): goto *SelectStage
+		if (stdKey == 1): goto *Quit
+	
+		await 16
+	loop
+
+	stop
+
